@@ -8,16 +8,25 @@ const prices = {
   cricket: 1000
 };
 
-const sportTitle = sport === "pickleball" ? "Pickleball Court Booking" : "Box Cricket Turf Booking";
-document.getElementById("sportTitle").innerText = sportTitle;
+const maxQuota = 30;
+const monthKey = new Date().toISOString().slice(0, 7); // e.g. "2025-06"
+const quotaKey = `quota-${mobile}-${monthKey}`;
+const usedHours = parseInt(localStorage.getItem(quotaKey)) || 0;
+
 document.getElementById("price").innerText = prices[sport];
+document.getElementById("sportTitle").innerText =
+  sport === "pickleball" ? "Pickleball Court Booking" : "Box Cricket Turf Booking";
+
+if (userType === "member" && sport === "pickleball") {
+  document.getElementById("quotaInfo").innerText = `Quota Used: ${usedHours} / ${maxQuota} hours`;
+}
 
 let selectedSlots = [];
 
 function renderSlots() {
   const container = document.getElementById("slotsContainer");
   for (let i = 8; i <= 22; i++) {
-    const slot = `${i}:00 - ${i+1}:00`;
+    const slot = `${i}:00 - ${i + 1}:00`;
     const slotId = `slot-${i}`;
     container.innerHTML += `
       <div>
@@ -33,12 +42,42 @@ function toggleSlot(slot) {
   } else {
     selectedSlots.push(slot);
   }
+  updateQuotaCheck();
+}
+
+function updateQuotaCheck() {
+  if (userType === "member" && sport === "pickleball") {
+    const totalHours = usedHours + selectedSlots.length;
+    const quotaInfo = document.getElementById("quotaInfo");
+    quotaInfo.innerText = `Quota Used: ${usedHours} / ${maxQuota} hours`;
+
+    const confirmBtn = document.getElementById("confirmBtn");
+    if (totalHours > maxQuota) {
+      quotaInfo.innerText += " ⚠️ Over quota!";
+      confirmBtn.disabled = true;
+      confirmBtn.innerText = "Quota Exceeded";
+    } else {
+      confirmBtn.disabled = false;
+      confirmBtn.innerText = "Confirm Booking";
+    }
+  }
 }
 
 function confirmBooking() {
   const total = prices[sport] * selectedSlots.length;
+  if (selectedSlots.length === 0) {
+    alert("Please select at least one slot.");
+    return;
+  }
+
   if (userType === "member" && sport === "pickleball") {
-    alert(`Booking confirmed for ${selectedSlots.length} hour(s). No payment needed.`);
+    const newHours = usedHours + selectedSlots.length;
+    if (newHours > maxQuota) {
+      alert("Booking exceeds your monthly quota.");
+      return;
+    }
+    localStorage.setItem(quotaKey, newHours);
+    alert(`Booking confirmed for ${selectedSlots.length} hour(s).`);
     sendWhatsApp();
   } else {
     alert(`Redirecting to payment: ₹${total}`);
@@ -54,4 +93,4 @@ function sendWhatsApp() {
 }
 
 renderSlots();
-
+updateQuotaCheck();
