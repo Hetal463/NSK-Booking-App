@@ -1,1 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap');
+
+body {
+  background: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  color: #000000;
+  padding: 30px;
+  max-width: 600px;
+  margin: auto;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+  border-bottom: 2px solid #708A62;
+  padding-bottom: 5px;
+  margin-bottom: 20px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid #000000;
+  border-radius: 6px;
+}
+
+button {
+  font-family: 'Poppins', sans-serif;
+  background-color: #000000;
+  color: #FFFFFF;
+  padding: 12px 20px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #708A62;
+}
+
+button.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.section-divider {
+  height: 2px;
+  background: linear-gradient(to right, #000000, #FFFFFF);
+  margin: 40px 0;
+}
+
+.highlight {
+  color: #708A62;
+}
 
