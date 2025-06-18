@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Booking – NSK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
 </head>
@@ -15,13 +16,31 @@
   <input type="date" id="bookingDate" min="" onchange="onDateChange()" /><br><br>
 
   <div id="quotaInfo" style="margin-bottom: 15px; font-weight: bold;"></div>
-
   <div id="slotsContainer" class="slot-grid"></div>
 
   <br>
   <button id="confirmBtn" onclick="confirmBooking()">Confirm Booking</button>
 
   <div class="section-divider"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
+      authDomain: "nsk-app-cbb07.firebaseapp.com",
+      databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com",
+      projectId: "nsk-app-cbb07",
+      storageBucket: "nsk-app-cbb07.firebasestorage.app",
+      messagingSenderId: "1012343800963",
+      appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
+      measurementId: "G-EQQMSMX3MQ"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 
   <script src="app.js"></script>
 </body>
