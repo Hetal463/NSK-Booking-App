@@ -1,1 +1,42 @@
-Mobile login & OTP
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login – NSK</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h2>Login to <span class="highlight">Nashik Sports Klub</span></h2>
+  
+  <input type="text" id="mobile" placeholder="Enter Mobile Number" />
+  <button onclick="sendOTP()">Send OTP</button>
+
+  <div id="otpSection" style="display: none;">
+    <input type="text" id="otp" placeholder="Enter OTP" />
+    <button onclick="verifyOTP()">Verify</button>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <script>
+    function sendOTP() {
+      document.getElementById('otpSection').style.display = 'block';
+      alert('OTP sent (demo)');
+    }
+
+    function verifyOTP() {
+      const mobile = document.getElementById('mobile').value;
+      const otp = document.getElementById('otp').value;
+      if (otp === "123456") {
+        const isMember = mobile.endsWith("5"); // Simulate logic
+        localStorage.setItem("userType", isMember ? "member" : "non-member");
+        localStorage.setItem("mobile", mobile);
+        location.href = "home.html";
+      } else {
+        alert("Invalid OTP. Try again.");
+      }
+    }
+  </script>
+</body>
+</html>
