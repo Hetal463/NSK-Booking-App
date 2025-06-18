@@ -17,6 +17,12 @@
     <button onclick="verifyOTP()">Verify</button>
   </div>
 
+  <div id="memberTypeSection" style="display: none;">
+    <label><strong>Select your membership type:</strong></label><br><br>
+    <button onclick="setMemberType('member')">I am a Member</button>
+    <button onclick="setMemberType('non-member')">I am a Non-Member</button>
+  </div>
+
   <div class="section-divider"></div>
 
   <script>
@@ -26,16 +32,19 @@
     }
 
     function verifyOTP() {
-      const mobile = document.getElementById('mobile').value;
       const otp = document.getElementById('otp').value;
       if (otp === "123456") {
-        const isMember = mobile.endsWith("5"); // Simulate logic
-        localStorage.setItem("userType", isMember ? "member" : "non-member");
-        localStorage.setItem("mobile", mobile);
-        location.href = "home.html";
+        document.getElementById('memberTypeSection').style.display = 'block';
       } else {
-        alert("Invalid OTP. Try again.");
+        alert("Invalid OTP. Please try again.");
       }
+    }
+
+    function setMemberType(type) {
+      const mobile = document.getElementById('mobile').value;
+      localStorage.setItem("userType", type);
+      localStorage.setItem("mobile", mobile);
+      location.href = "home.html";
     }
   </script>
 </body>
