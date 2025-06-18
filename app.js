@@ -1,10 +1,8 @@
-// Get user info from localStorage
 const userType = localStorage.getItem("userType");
 const mobile = localStorage.getItem("mobile");
 const sport = localStorage.getItem("sport");
 document.getElementById("userType").innerText = userType;
 
-// Constants
 const prices = { pickleball: 800, cricket: 1000 };
 const maxQuota = 30;
 const todayStr = new Date().toISOString().split("T")[0];
@@ -12,31 +10,15 @@ const monthKey = new Date().toISOString().slice(0, 7);
 const quotaKey = `quota-${mobile}-${monthKey}`;
 let usedHours = parseInt(localStorage.getItem(quotaKey)) || 0;
 
-// State
 let selectedSlots = [];
 let selectedDate = todayStr;
 let existingBookings = {};
 
-// Display
 document.getElementById("price").innerText = prices[sport];
 document.getElementById("sportTitle").innerText =
   sport === "pickleball" ? "Pickleball Court Booking" : "Box Cricket Turf Booking";
 document.getElementById("bookingDate").min = todayStr;
 document.getElementById("bookingDate").value = todayStr;
-
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
-  authDomain: "nsk-app-cbb07.firebaseapp.com",
-  databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com", // REQUIRED
-  projectId: "nsk-app-cbb07",
-  storageBucket: "nsk-app-cbb07.firebasestorage.app",
-  messagingSenderId: "1012343800963",
-  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
-  measurementId: "G-EQQMSMX3MQ"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
 function onDateChange() {
   selectedDate = document.getElementById("bookingDate").value;
@@ -139,4 +121,4 @@ function sendWhatsApp() {
   window.open(waURL, "_blank");
 }
 
-onDateChange(); // Initial load
+onDateChange(); // initial load
