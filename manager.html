@@ -2,15 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Manager – NSK</title>
+  <title>Manager Dashboard – NSK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
 </head>
 <body>
   <h2>Manager Dashboard</h2>
-  <p>Coming soon: filters, export, password access</p>
+
+  <label for="viewDate"><strong>Select Date:</strong></label><br>
+  <input type="date" id="viewDate" min="" onchange="loadBookings()" /><br><br>
+
+  <div id="results"></div>
 
   <div class="section-divider"></div>
+
+  <script>
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("viewDate").min = "2025-01-01";
+    document.getElementById("viewDate").value = todayStr;
+
+    function loadBookings() {
+      const date = document.getElementById("viewDate").value;
+      const sports = ["pickleball", "cricket"];
+      let html = '';
+
+      sports.forEach(sport => {
+        const key = `bookings-${date}-${sport}`;
+        const slots = JSON.parse(localStorage.getItem(key)) || [];
+
+        html += `<h3 style="margin-top: 30px;">${sport.charAt(0).toUpperCase() + sport.slice(1)} Bookings</h3>`;
+        if (slots.length > 0) {
+          html += `<ul>`;
+          slots.forEach(slot => {
+            html += `<li><strong>Slot:</strong> ${slot}</li>`;
+          });
+          html += `</ul>`;
+        } else {
+          html += `<p>No bookings yet.</p>`;
+        }
+      });
+
+      document.getElementById("results").innerHTML = html;
+    }
+
+    loadBookings(); // Load today by default
+  </script>
 </body>
 </html>
-
