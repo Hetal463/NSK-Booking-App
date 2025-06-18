@@ -9,9 +9,13 @@ const prices = {
 };
 
 const maxQuota = 30;
-const monthKey = new Date().toISOString().slice(0, 7); // e.g. "2025-06"
+const monthKey = new Date().toISOString().slice(0, 7); // "2025-06"
 const quotaKey = `quota-${mobile}-${monthKey}`;
 const usedHours = parseInt(localStorage.getItem(quotaKey)) || 0;
+
+const today = new Date().toISOString().slice(0, 10); // "2025-06-18"
+const bookingKey = `bookings-${today}-${sport}`;
+const existingBookings = JSON.parse(localStorage.getItem(bookingKey)) || [];
 
 document.getElementById("price").innerText = prices[sport];
 document.getElementById("sportTitle").innerText =
@@ -28,10 +32,12 @@ function renderSlots() {
   for (let i = 8; i <= 22; i++) {
     const slot = `${i}:00 - ${i + 1}:00`;
     const slotId = `slot-${i}`;
+    const isBooked = existingBookings.includes(slot);
+
     container.innerHTML += `
       <div>
-        <input type="checkbox" id="${slotId}" onclick="toggleSlot('${slot}')" />
-        <label for="${slotId}">${slot}</label>
+        <input type="checkbox" id="${slotId}" ${isBooked ? "disabled" : ""} onclick="toggleSlot('${slot}')" />
+        <label for="${slotId}" style="${isBooked ? 'color:gray;text-decoration:line-through;' : ''}">${slot}</label>
       </div>`;
   }
 }
@@ -77,17 +83,25 @@ function confirmBooking() {
       return;
     }
     localStorage.setItem(quotaKey, newHours);
-    alert(`Booking confirmed for ${selectedSlots.length} hour(s).`);
-    sendWhatsApp();
-  } else {
+  }
+
+  // Save bookings
+  const updatedBookings = [...existingBookings, ...selectedSlots];
+  localStorage.setItem(bookingKey, JSON.stringify(updatedBookings));
+
+  // Redirect/pay/send
+  if (userType === "non-member") {
     alert(`Redirecting to payment: ₹${total}`);
     window.open(`https://rzp.io/l/YOUR_PAYMENT_LINK`, "_blank");
-    sendWhatsApp();
+  } else {
+    alert(`Booking confirmed for ${selectedSlots.length} hour(s).`);
   }
+
+  sendWhatsApp();
 }
 
 function sendWhatsApp() {
-  const msg = `Hi, your booking for ${sport} (${selectedSlots.join(", ")}) is confirmed at Nashik Sports Klub.`;
+  const msg = `Hi, your booking for ${sport} (${selectedSlots.join(", ")}) on ${today} is confirmed at Nashik Sports Klub.`;
   const waURL = `https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`;
   window.open(waURL, "_blank");
 }
