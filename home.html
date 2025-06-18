@@ -1,1 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Select Sport – NSK</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h2>Select Your Sport</h2>
+
+  <button onclick="selectSport('pickleball')">🏓 Book Pickleball (4 Courts)</button><br><br>
+  <button onclick="selectSport('cricket')">🏏 Book Box Cricket (2 Turfs)</button><br><br>
+  <button class="disabled" disabled>☕ Riverside Café (Coming Soon)</button>
+
+  <div class="section-divider"></div>
+
+  <script>
+    function selectSport(sport) {
+      localStorage.setItem("sport", sport);
+      location.href = "booking.html";
+    }
+  </script>
+</body>
+</html>
 
