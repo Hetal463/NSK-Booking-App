@@ -1,55 +1,72 @@
+// Get user info from localStorage
 const userType = localStorage.getItem("userType");
 const mobile = localStorage.getItem("mobile");
 const sport = localStorage.getItem("sport");
 document.getElementById("userType").innerText = userType;
 
-const prices = {
-  pickleball: 800,
-  cricket: 1000
-};
-
+// Constants
+const prices = { pickleball: 800, cricket: 1000 };
 const maxQuota = 30;
-const todayStr = new Date().toISOString().split("T")[0]; // "2025-06-18"
-document.getElementById("bookingDate").min = todayStr;
-document.getElementById("bookingDate").value = todayStr;
-
-const monthKey = new Date().toISOString().slice(0, 7); // "2025-06"
+const todayStr = new Date().toISOString().split("T")[0];
+const monthKey = new Date().toISOString().slice(0, 7);
 const quotaKey = `quota-${mobile}-${monthKey}`;
 let usedHours = parseInt(localStorage.getItem(quotaKey)) || 0;
 
+// State
 let selectedSlots = [];
 let selectedDate = todayStr;
-let existingBookings = [];
+let existingBookings = {};
 
+// Display
 document.getElementById("price").innerText = prices[sport];
 document.getElementById("sportTitle").innerText =
   sport === "pickleball" ? "Pickleball Court Booking" : "Box Cricket Turf Booking";
+document.getElementById("bookingDate").min = todayStr;
+document.getElementById("bookingDate").value = todayStr;
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
+  authDomain: "nsk-app-cbb07.firebaseapp.com",
+  databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com", // REQUIRED
+  projectId: "nsk-app-cbb07",
+  storageBucket: "nsk-app-cbb07.firebasestorage.app",
+  messagingSenderId: "1012343800963",
+  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
+  measurementId: "G-EQQMSMX3MQ"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 function onDateChange() {
   selectedDate = document.getElementById("bookingDate").value;
-  loadBookings();
-  renderSlots();
-  updateQuotaCheck();
+  selectedSlots = [];
+  loadBookingsFromFirebase();
 }
 
-function loadBookings() {
-  const bookingKey = `bookings-${selectedDate}-${sport}`;
-  existingBookings = JSON.parse(localStorage.getItem(bookingKey)) || [];
-  selectedSlots = [];
-  document.getElementById("slotsContainer").innerHTML = '';
+function loadBookingsFromFirebase() {
+  const ref = db.ref(`bookings/${selectedDate}/${sport}`);
+  ref.once('value', snapshot => {
+    existingBookings = snapshot.val() || {};
+    renderSlots();
+    updateQuotaCheck();
+  });
 }
 
 function renderSlots() {
   const container = document.getElementById("slotsContainer");
+  container.innerHTML = '';
   for (let i = 8; i <= 22; i++) {
-    const slot = `${i}:00 - ${i + 1}:00`;
+    const slot = `${String(i).padStart(2, '0')}:00 - ${String(i + 1).padStart(2, '0')}:00`;
     const slotId = `slot-${i}`;
-    const isBooked = existingBookings.includes(slot);
+    const isBooked = existingBookings[slot];
 
     container.innerHTML += `
       <div>
         <input type="checkbox" id="${slotId}" ${isBooked ? "disabled" : ""} onclick="toggleSlot('${slot}')" />
-        <label for="${slotId}" style="${isBooked ? 'color:gray;text-decoration:line-through;' : ''}">${slot}</label>
+        <label for="${slotId}" style="${isBooked ? 'color:gray;text-decoration:line-through;' : ''}">
+          ${slot} ${isBooked ? `(Booked)` : ""}
+        </label>
       </div>`;
   }
 
@@ -86,7 +103,6 @@ function updateQuotaCheck() {
 }
 
 function confirmBooking() {
-  const total = prices[sport] * selectedSlots.length;
   if (selectedSlots.length === 0) {
     alert("Please select at least one slot.");
     return;
@@ -102,18 +118,19 @@ function confirmBooking() {
     localStorage.setItem(quotaKey, usedHours);
   }
 
-  const bookingKey = `bookings-${selectedDate}-${sport}`;
-  const updatedBookings = [...existingBookings, ...selectedSlots];
-  localStorage.setItem(bookingKey, JSON.stringify(updatedBookings));
+  const updates = {};
+  selectedSlots.forEach(slot => {
+    updates[`bookings/${selectedDate}/${sport}/${slot}`] = mobile;
+  });
 
-  if (userType === "non-member") {
-    alert(`Redirecting to payment: ₹${total}`);
-    window.open(`https://rzp.io/l/YOUR_PAYMENT_LINK`, "_blank");
-  } else {
-    alert(`Booking confirmed for ${selectedSlots.length} hour(s).`);
-  }
-
-  sendWhatsApp();
+  db.ref().update(updates, error => {
+    if (error) {
+      alert("Booking failed. Please try again.");
+    } else {
+      alert("Booking confirmed!");
+      sendWhatsApp();
+    }
+  });
 }
 
 function sendWhatsApp() {
@@ -122,4 +139,4 @@ function sendWhatsApp() {
   window.open(waURL, "_blank");
 }
 
-onDateChange(); // initial load
+onDateChange(); // Initial load
