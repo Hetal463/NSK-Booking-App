@@ -6,52 +6,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
 </head>
 <body>
   <h2>Manager Dashboard</h2>
 
   <div id="loginSection">
-    <p><strong>Enter Manager Password:</strong></p>
-    <input type="password" id="adminPass" placeholder="Enter password" />
+    <input type="password" id="adminPass" placeholder="Enter manager password" />
     <button onclick="verifyPassword()">Login</button>
   </div>
 
-  <div id="dashboard" style="display: none;">
-    <label for="viewDate"><strong>Select Date:</strong></label><br>
-    <input type="date" id="viewDate" /><br><br>
-
-    <div id="results"></div>
+  <div id="dashboard" style="display:none;">
+    <label>Select Date: <input type="date" id="viewDate" /></label>
+    <div id="results" style="margin-top: 20px;"></div>
     <button onclick="exportCSV()">Export to Excel</button>
   </div>
 
-  <div class="section-divider"></div>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
       authDomain: "nsk-app-cbb07.firebaseapp.com",
       databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com",
       projectId: "nsk-app-cbb07",
-      storageBucket: "nsk-app-cbb07.firebasestorage.app",
+      storageBucket: "nsk-app-cbb07.appspot.com",
       messagingSenderId: "1012343800963",
-      appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
-      measurementId: "G-EQQMSMX3MQ"
+      appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const todayStr = new Date().toISOString().split("T")[0];
-    document.getElementById("viewDate").value = todayStr;
-    document.getElementById("viewDate").min = "2025-01-01";
-
     const MANAGER_PASSWORD = "nskadmin123";
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("viewDate").value = today;
 
     function verifyPassword() {
-      const pass = document.getElementById("adminPass").value;
-      if (pass === MANAGER_PASSWORD) {
+      const input = document.getElementById("adminPass").value;
+      if (input === MANAGER_PASSWORD) {
         document.getElementById("loginSection").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
         loadBookings();
@@ -63,38 +54,37 @@
     function loadBookings() {
       const date = document.getElementById("viewDate").value;
       const sports = ["pickleball", "cricket"];
-      let html = '';
-      window.exportData = [["Sport", "Slot", "Mobile"]];
+      let csv = [["Sport", "Slot", "Mobile"]];
+      let html = "";
 
       sports.forEach(sport => {
-        const ref = db.ref(`bookings/${date}/${sport}`);
-        html += `<h3 style="margin-top: 30px;">${sport.toUpperCase()}</h3><ul>`;
-        ref.once('value', snapshot => {
-          const data = snapshot.val();
+        db.ref(`bookings/${date}/${sport}`).once("value", snap => {
+          const data = snap.val();
+          html += `<h3>${sport.toUpperCase()}</h3><ul>`;
           if (data) {
-            Object.entries(data).forEach(([slot, mobile]) => {
+            for (const slot in data) {
+              const mobile = data[slot];
               html += `<li><strong>${slot}</strong> – ${mobile}</li>`;
-              window.exportData.push([sport, slot, mobile]);
-            });
+              csv.push([sport, slot, mobile]);
+            }
           } else {
-            html += `<li>No bookings.</li>`;
+            html += `<li>No bookings</li>`;
           }
-          html += `</ul>`;
+          html += "</ul>";
           document.getElementById("results").innerHTML = html;
+          window.managerCSV = csv;
         });
       });
     }
 
     function exportCSV() {
-      let csv = window.exportData.map(row => row.join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
+      let csvText = window.managerCSV.map(row => row.join(",")).join("\n");
+      const blob = new Blob([csvText], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `NSK_Bookings_${document.getElementById("viewDate").value}.csv`;
-      document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
     }
 
     document.getElementById("viewDate").addEventListener("change", loadBookings);
