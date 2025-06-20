@@ -1,57 +1,130 @@
+/* style.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap');
 
 body {
-  background: #FFFFFF;
   font-family: 'Inter', sans-serif;
+  background: #FFFFFF;
   color: #000000;
   padding: 30px;
-  max-width: 800px;
-  margin: auto;
+  margin: 0;
 }
 
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
   border-bottom: 2px solid #708A62;
   padding-bottom: 5px;
-  margin-bottom: 20px;
+}
+
+.booking-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.booking-left {
+  flex: 2;
+  min-width: 300px;
+}
+
+.booking-right {
+  flex: 1;
+  min-width: 250px;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 12px;
+  background: #f9f9f9;
+}
+
+.booking-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #708A62;
+  border-left: 4px solid #556B2F;
+  border-radius: 10px;
+  background: #FAFAFA;
+}
+
+label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: bold;
 }
 
 input, select {
   width: 100%;
   padding: 10px;
-  margin-top: 10px;
   font-family: 'Inter', sans-serif;
-  border: 1px solid #000000;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
   border-radius: 6px;
+  font-size: 14px;
 }
 
 button {
-  font-family: 'Poppins', sans-serif;
-  background-color: #000000;
+  background: #000000;
   color: #FFFFFF;
-  padding: 12px 20px;
-  margin-top: 15px;
   border: none;
-  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  border-radius: 6px;
   cursor: pointer;
+  width: 100%;
   transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background-color: #708A62;
+  background: #708A62;
 }
 
-button.disabled {
-  background-color: #ccc;
+#slotGrid {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.slot-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.slot-table th,
+.slot-table td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.slot-table td.booked {
+  background: #f8d7da;
+  color: #a94442;
   cursor: not-allowed;
+  font-weight: bold;
 }
 
-.section-divider {
-  height: 2px;
-  background: linear-gradient(to right, #000000, #FFFFFF);
-  margin: 40px 0;
+.slot-table td.available {
+  background: #e0f7e0;
+  cursor: pointer;
 }
 
-.highlight {
-  color: #708A62;
+.slot-table td.selected {
+  background: #c0e7c0;
+  border: 2px solid #708A62;
+  font-weight: bold;
+}
+
+#summaryList {
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .booking-container {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
 }
