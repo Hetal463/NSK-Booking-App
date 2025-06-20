@@ -3,227 +3,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Book a Slot – NSK</title>
+  <title>Book Slot – NSK</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
-  <style>
-    /* Step-by-step layout */
-    .step-box {
-      background: #f9f9f9;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      border-left: 5px solid #708A62;
-    }
-    .main-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .left-col {
-      flex: 2;
-      min-width: 300px;
-    }
-    .right-col {
-      flex: 1;
-      min-width: 250px;
-    }
-    .slot-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 10px;
-    }
-    .slot-item input { margin-right: 10px; }
-    .disabled-slot { color: gray; text-decoration: line-through; }
-    .right-panel {
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    @media (max-width: 768px) {
-      .main-grid { flex-direction: column; }
-    }
-  </style>
 </head>
 <body>
-  <h2>Book a Slot</h2>
+  <div class="booking-container">
+    <!-- LEFT PANEL -->
+    <div class="booking-left">
+      <h2>Book a Slot</h2>
 
-  <div class="main-grid">
-    <div class="left-col">
-      <div class="step-box">
-        <h3>1. Selected Activity</h3>
-        <p><strong>Sport:</strong> <span id="sportTitle"></span></p>
-        <p><strong>Price:</strong> ₹<span id="price"></span> per hour</p>
-        <p><strong>User:</strong> <span id="userType"></span></p>
-        <p><strong>Date:</strong> <input type="date" id="bookingDate" onchange="onDateChange()" /></p>
-        <div id="quotaInfo" style="font-weight: bold;"></div>
+      <!-- Activity and Facility -->
+      <div class="booking-section">
+        <p><strong>Selected Activity:</strong> <span id="sportLabel"></span></p>
+        <p><strong>Price:</strong> ₹<span id="priceLabel"></span> per hour</p>
+
+        <label for="facility">Select Facility:</label>
+        <select id="facilitySelect" onchange="renderSlots()"></select>
+
+        <label for="date">Select Date:</label>
+        <input type="date" id="bookingDate" onchange="renderSlots()" />
       </div>
 
-      <div class="step-box">
-        <h3>2. Choose a Facility</h3>
-        <p>(All courts included)</p>
-      </div>
-
-      <div class="step-box">
-        <h3>3. Select Slots (1 hr each)</h3>
-        <div id="slotsContainer" class="slot-grid"></div>
+      <!-- SLOT GRID -->
+      <div class="booking-section">
+        <div id="slotGrid"></div>
       </div>
     </div>
 
-    <div class="right-col">
-      <div class="right-panel">
-        <h4>Booking Summary</h4>
-        <p id="slotSummary">No slots selected yet.</p>
-        <button id="confirmBtn" onclick="confirmBooking()">Please select slots</button>
-      </div>
+    <!-- RIGHT PANEL -->
+    <div class="booking-right">
+      <h3>Booking Summary</h3>
+      <div id="summaryList">No slots selected</div>
+      <p><strong>Total: ₹<span id="totalAmount">0</span></strong></p>
+
+      <input type="text" id="userName" placeholder="Full Name" />
+      <input type="text" id="userPhone" placeholder="Mobile Number" />
+      <button onclick="confirmBooking()">Proceed</button>
     </div>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
-      authDomain: "nsk-app-cbb07.firebaseapp.com",
-      databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com",
-      projectId: "nsk-app-cbb07",
-      storageBucket: "nsk-app-cbb07.appspot.com",
-      messagingSenderId: "1012343800963",
-      appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const userType = localStorage.getItem("userType");
-    const mobile = localStorage.getItem("mobile");
-    const sport = localStorage.getItem("sport");
-    document.getElementById("userType").innerText = userType;
-    document.getElementById("sportTitle").innerText = sport.toUpperCase();
-    document.getElementById("price").innerText = sport === "pickleball" ? 800 : 1000;
-
-    const maxQuota = 30;
-    const todayStr = new Date().toISOString().split("T")[0];
-    const monthKey = new Date().toISOString().slice(0, 7);
-    const quotaKey = `quota-${mobile}-${monthKey}`;
-    let usedHours = parseInt(localStorage.getItem(quotaKey)) || 0;
-
-    let selectedSlots = [];
-    let selectedDate = todayStr;
-    let existingBookings = {};
-
-    document.getElementById("bookingDate").min = todayStr;
-    document.getElementById("bookingDate").value = todayStr;
-
-    function onDateChange() {
-      selectedDate = document.getElementById("bookingDate").value;
-      selectedSlots = [];
-      loadBookings();
-    }
-
-    function loadBookings() {
-      const ref = db.ref(`bookings/${selectedDate}/${sport}`);
-      ref.once("value", snapshot => {
-        existingBookings = snapshot.val() || {};
-        renderSlots();
-        updateQuotaCheck();
-      });
-    }
-
-    function renderSlots() {
-      const container = document.getElementById("slotsContainer");
-      container.innerHTML = "";
-      for (let i = 7; i <= 22; i++) {
-        const slot = `${String(i).padStart(2, '0')}:00 - ${String(i+1).padStart(2, '0')}:00`;
-        const isBooked = existingBookings[slot];
-        container.innerHTML += `
-          <div class="slot-item">
-            <input type="checkbox" id="slot-${i}" ${isBooked ? "disabled" : ""} onclick="toggleSlot('${slot}')">
-            <label for="slot-${i}" class="${isBooked ? 'disabled-slot' : ''}">${slot} ${isBooked ? '(Booked)' : ''}</label>
-          </div>`;
-      }
-    }
-
-    function toggleSlot(slot) {
-      if (selectedSlots.includes(slot)) {
-        selectedSlots = selectedSlots.filter(s => s !== slot);
-      } else {
-        selectedSlots.push(slot);
-      }
-      updateQuotaCheck();
-    }
-
-    function updateQuotaCheck() {
-      const summary = document.getElementById("slotSummary");
-      const confirmBtn = document.getElementById("confirmBtn");
-      if (selectedSlots.length === 0) {
-        summary.innerText = "No slots selected yet.";
-        confirmBtn.innerText = "Please select slots";
-        confirmBtn.disabled = true;
-        return;
-      }
-
-      summary.innerHTML = selectedSlots.map(s => `✅ ${s}`).join("<br>");
-      confirmBtn.innerText = "Confirm Booking";
-      confirmBtn.disabled = false;
-
-      if (userType === "member" && sport === "pickleball") {
-        const newHours = usedHours + selectedSlots.length;
-        document.getElementById("quotaInfo").innerText = `Quota Used: ${usedHours} / ${maxQuota}`;
-        if (newHours > maxQuota) {
-          confirmBtn.disabled = true;
-          confirmBtn.innerText = "Quota Exceeded!";
-        }
-      }
-    }
-
-    function confirmBooking() {
-      const total = (sport === "pickleball" ? 800 : 1000) * selectedSlots.length;
-      const updates = {};
-      selectedSlots.forEach(slot => {
-        updates[`bookings/${selectedDate}/${sport}/${slot}`] = mobile;
-      });
-
-      const saveBooking = () => {
-        db.ref().update(updates, err => {
-          if (err) {
-            alert("Booking failed.");
-          } else {
-            sendWhatsApp();
-            if (userType === "member" && sport === "pickleball") {
-              usedHours += selectedSlots.length;
-              localStorage.setItem(quotaKey, usedHours);
-            }
-          }
-        });
-      };
-
-      if (userType === "non-member") {
-        const name = prompt("Enter your name:");
-        const options = {
-          key: "rzp_test_YourKeyHere", // Replace with your Razorpay key
-          amount: total * 100,
-          currency: "INR",
-          name: "Nashik Sports Klub",
-          description: `${sport} booking for ${selectedSlots.length} slot(s)`,
-          handler: saveBooking,
-          prefill: { name, contact: mobile },
-          theme: { color: "#708A62" }
-        };
-        new Razorpay(options).open();
-      } else {
-        saveBooking();
-      }
-    }
-
-    function sendWhatsApp() {
-      const msg = `✅ *Booking Confirmed!*\n\n📍 *Nashik Sports Klub*\n🏓 Sport: ${sport.toUpperCase()}\n📅 Date: ${selectedDate}\n⏰ Slots:\n${selectedSlots.map(s => `• ${s}`).join("\n")}\n\n📌 Address: Opp. Sula Vineyards, Nashik\n\nThank you for booking!`;
-      const url = `https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
-    }
-
-    onDateChange();
-  </script>
+  <script src="booking.js"></script>
 </body>
 </html>
