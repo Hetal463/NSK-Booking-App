@@ -1,169 +1,170 @@
-// 1. Firebase setup
+// === Firebase Init ===
 const firebaseConfig = {
   apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
   authDomain: "nsk-app-cbb07.firebaseapp.com",
-  databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com",
   projectId: "nsk-app-cbb07",
   storageBucket: "nsk-app-cbb07.appspot.com",
   messagingSenderId: "1012343800963",
-  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6"
+  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
+  measurementId: "G-EQQMSMX3MQ"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 2. User & sport
-const sport = localStorage.getItem("sport") || "pickleball";
-const userType = localStorage.getItem("userType") || "non-member";
-document.getElementById("sportLabel").innerText = sport.toUpperCase();
-document.getElementById("priceLabel").innerText = sport === "pickleball" ? 800 : 1000;
-
-// 3. Facility options
-const facilitySelect = document.getElementById("facilitySelect");
-facilitySelect.innerHTML = "";
-const courtCount = sport === "pickleball" ? 4 : 2;
-for (let i = 1; i <= courtCount; i++) {
-  const opt = document.createElement("option");
-  opt.value = `Court ${i}`;
-  opt.innerText = `Court ${i}`;
-  facilitySelect.appendChild(opt);
-}
-
-// 4. Date setup
-const todayStr = new Date().toISOString().split("T")[0];
-document.getElementById("bookingDate").value = todayStr;
-document.getElementById("bookingDate").min = todayStr;
-
-// 5. Timeslots
+// === Constants ===
+const PRICE = 800;
 const timeSlots = [];
-for (let h = 7; h < 23; h++) {
-  const start = `${String(h).padStart(2, '0')}:00`;
-  const end = `${String(h+1).padStart(2, '0')}:00`;
-  timeSlots.push(`${start} - ${end}`);
-}
+for (let h = 7; h <= 22; h++) timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
+const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const courts = ['Court 1', 'Court 2', 'Court 3', 'Court 4'];
 
-// 6. Booking selection
-let selectedSlots = []; // [{slot, court}]
-function toggleSlot(slot, court, isBooked) {
-  if (isBooked) return;
-  const key = `${slot}__${court}`;
-  const index = selectedSlots.findIndex(s => s.key === key);
-  if (index >= 0) {
-    selectedSlots.splice(index, 1);
-  } else {
-    selectedSlots.push({ slot, court, key });
+let selectedSlots = [];
+
+// === Helpers ===
+function getWeekDates() {
+  const today = new Date();
+  const start = new Date(today.setDate(today.getDate() - today.getDay()));
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    dates.push(new Date(d));
   }
-  updateSummary();
-  renderSlots();
+  return dates;
 }
 
-function updateSummary() {
-  const list = document.getElementById("summaryList");
+function formatDateKey(date) {
+  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
+}
+
+function updateCartUI() {
+  const cart = document.getElementById('cartSummary');
+  const cartBar = document.getElementById('cartBar');
+  cart.innerHTML = '';
   if (selectedSlots.length === 0) {
-    list.innerText = "No slots selected";
-    document.getElementById("totalAmount").innerText = "0";
+    cartBar.classList.add('hidden');
     return;
   }
-
-  list.innerHTML = selectedSlots.map(s => `<div>✅ ${s.court} – ${s.slot}</div>`).join("");
-  const price = sport === "pickleball" ? 800 : 1000;
-  document.getElementById("totalAmount").innerText = price * selectedSlots.length;
-}
-
-// 7. Render slots from Firebase
-function renderSlots() {
-  const court = facilitySelect.value;
-  const date = document.getElementById("bookingDate").value;
-  const grid = document.getElementById("slotGrid");
-  grid.innerHTML = "<p>Loading slots...</p>";
-
-  db.ref(`bookings/${date}/${sport}/${court}`).once("value", snap => {
-    const booked = snap.val() || {};
-    grid.innerHTML = "";
-
-    const table = document.createElement("table");
-    table.classList.add("slot-table");
-
-    const tbody = document.createElement("tbody");
-    timeSlots.forEach(slot => {
-      const tr = document.createElement("tr");
-
-      const tdTime = document.createElement("td");
-      tdTime.innerText = slot;
-      tr.appendChild(tdTime);
-
-      const tdStatus = document.createElement("td");
-      const isBooked = booked[slot];
-
-      const key = `${slot}__${court}`;
-      const isSelected = selectedSlots.some(s => s.key === key);
-
-      tdStatus.className = isBooked ? "booked" : isSelected ? "selected" : "available";
-      tdStatus.innerText = isBooked ? "Booked" : isSelected ? "Selected" : "Available";
-      tdStatus.onclick = () => toggleSlot(slot, court, isBooked);
-
-      tr.appendChild(tdStatus);
-      tbody.appendChild(tr);
-    });
-
-    table.appendChild(tbody);
-    grid.appendChild(table);
-  });
-}
-
-renderSlots();
-
-// 8. Confirm booking
-function confirmBooking() {
-  if (selectedSlots.length === 0) {
-    alert("Please select at least one slot.");
-    return;
-  }
-
-  const name = document.getElementById("userName").value;
-  const mobile = document.getElementById("userPhone").value;
-  if (!name || !mobile) return alert("Enter name and mobile");
-
-  const date = document.getElementById("bookingDate").value;
-  const price = sport === "pickleball" ? 800 : 1000;
-  const total = selectedSlots.length * price;
-
-  const updates = {};
+  cartBar.classList.remove('hidden');
   selectedSlots.forEach(s => {
-    updates[`bookings/${date}/${sport}/${s.court}/${s.slot}`] = mobile;
+    const div = document.createElement('div');
+    div.innerText = `${s.time} | ${s.date} | ${s.court}`;
+    cart.appendChild(div);
+  });
+  document.getElementById('cartTotal').innerText = selectedSlots.length * PRICE;
+}
+
+function proceedToSummary() {
+  const list = document.getElementById('summaryList');
+  list.innerHTML = '';
+  selectedSlots.forEach(s => {
+    const li = document.createElement('li');
+    li.innerText = `${s.court} — ${s.date} at ${s.time}`;
+    list.appendChild(li);
+  });
+  document.getElementById('summaryTotal').innerText = selectedSlots.length * PRICE;
+  document.getElementById('summaryPanel').classList.remove('hidden');
+}
+
+function confirmBooking() {
+  const name = document.getElementById('userName').value.trim();
+  const phone = document.getElementById('userPhone').value.trim();
+  if (!name || !phone) return alert("Please enter all details");
+
+  const gst = document.getElementById('includeGST').checked;
+  const total = selectedSlots.length * PRICE;
+
+  // === Save Booking to Firebase ===
+  selectedSlots.forEach(s => {
+    const ref = db.ref(`bookings/${s.date}/${s.time}/${s.court.replace(' ', '_')}`);
+    ref.set({ name, phone, paid: total, gst });
   });
 
-  const saveToFirebase = () => {
-    db.ref().update(updates, err => {
-      if (err) {
-        alert("Booking failed.");
-      } else {
-        sendWhatsApp(name, mobile);
-      }
-    });
+  // === Razorpay ===
+  const options = {
+    key: "rzp_test_dummyKEY123456789", // REPLACE with live key
+    amount: total * 100,
+    currency: "INR",
+    name: "NSK Pickleball",
+    description: "Slot Booking",
+    handler: function () {
+      // === WhatsApp Message ===
+      const msg = `Booking Confirmed!\nName: ${name}\nPhone: ${phone}\nSlots:\n` +
+        selectedSlots.map(s => `${s.date} – ${s.time} – ${s.court}`).join('\n') +
+        `\nAmount Paid: ₹${total}`;
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+      alert("Booking confirmed!");
+      window.location.href = "home.html";
+    },
+    prefill: {
+      name: name,
+      contact: phone
+    }
   };
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
 
-  if (userType === "non-member") {
-    const options = {
-      key: "rzp_test_YourKeyHere", // Replace with your Razorpay key
-      amount: total * 100,
-      currency: "INR",
-      name: "Nashik Sports Klub",
-      description: `${sport} booking (${selectedSlots.length} slots)`,
-      handler: saveToFirebase,
-      prefill: { name, contact: mobile },
-      theme: { color: "#708A62" }
-    };
-    new Razorpay(options).open();
-  } else {
-    saveToFirebase();
+// === Build Grid ===
+function buildGrid() {
+  const grid = document.getElementById('slotGrid');
+  grid.innerHTML = '';
+
+  const dates = getWeekDates();
+  document.getElementById('week-date-range').innerText =
+    `${dates[0].toDateString()} - ${dates[6].toDateString()}`;
+
+  // Headers
+  grid.appendChild(document.createElement('div')); // empty corner
+  for (let d = 0; d < 7; d++) {
+    const head = document.createElement('div');
+    head.className = 'slot-header';
+    head.innerText = days[dates[d].getDay()] + `\n${dates[d].getDate()}`;
+    grid.appendChild(head);
   }
+
+  timeSlots.forEach(time => {
+    // Time column
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'slot-time';
+    timeDiv.innerText = time;
+    grid.appendChild(timeDiv);
+
+    for (let d = 0; d < 7; d++) {
+      const cell = document.createElement('div');
+      cell.className = 'slot-cell available';
+      const dateKey = formatDateKey(dates[d]);
+      cell.innerText = `₹${PRICE}\n1 left`;
+      cell.onclick = () => {
+        const key = `${dateKey}-${time}-Court 1`; // Only 1 court shown now
+        const already = selectedSlots.find(s => s.key === key);
+        if (already) {
+          selectedSlots = selectedSlots.filter(s => s.key !== key);
+          cell.classList.remove('selected');
+        } else {
+          selectedSlots.push({ key, date: dateKey, time, court: 'Court 1' });
+          cell.classList.add('selected');
+        }
+        updateCartUI();
+      };
+
+      // Fetch booked slots
+      const ref = db.ref(`bookings/${dateKey}/${time}/Court_1`);
+      ref.once('value', snap => {
+        if (snap.exists()) {
+          cell.className = 'slot-cell booked';
+          cell.innerText = 'Booked';
+          cell.onclick = null;
+        }
+      });
+
+      grid.appendChild(cell);
+    }
+  });
 }
 
-// 9. WhatsApp confirmation
-function sendWhatsApp(name, mobile) {
-  const date = document.getElementById("bookingDate").value;
-  const msg = `✅ *Booking Confirmed!*\n\n👤 ${name}\n📱 ${mobile}\n📅 Date: ${date}\n🏓 Sport: ${sport.toUpperCase()}\n\n⏰ Slots:\n${selectedSlots.map(s => `• ${s.court} – ${s.slot}`).join("\n")}\n\n📌 Nashik Sports Klub\nOpp. Sula Vineyards, Nashik\n\nThanks for booking!`;
-
-  const link = `https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`;
-  window.open(link, "_blank");
-}
+// === Init ===
+window.onload = () => {
+  buildGrid();
+};
