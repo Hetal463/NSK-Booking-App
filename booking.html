@@ -4,38 +4,52 @@
   <meta charset="UTF-8" />
   <title>Book Slot – NSK</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet" />
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link href="style.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter&family=Poppins&display=swap" rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
-  <div class="booking-container">
-    <!-- LEFT SIDE: Slot Table -->
-    <div class="booking-left">
-      <h2>Book a Slot</h2>
+  <div class="booking-page">
+    <!-- Header -->
+    <div class="booking-header">
+      <h2>Pickleball Courts | Nashik Sports Klub</h2>
+      <p id="week-date-range">Loading...</p>
+    </div>
 
-      <div class="booking-section">
-        <label for="bookingDate"><strong>Select Date:</strong></label>
-        <input type="date" id="bookingDate" onchange="renderSlotGrid()" />
+    <!-- Time x Day Grid -->
+    <div id="slotGrid" class="slot-grid">
+      <!-- JS will populate table: time rows x Mon-Sun columns -->
+      Loading slot grid...
+    </div>
+
+    <!-- Floating Cart -->
+    <div id="cartBar" class="cart-bar hidden">
+      <div id="cartSummary" class="cart-summary">
+        <!-- Selected slots will appear here -->
       </div>
-
-      <div class="booking-section" id="slotGridContainer">
-        <!-- Slot grid will be rendered here by booking.js -->
-        <p>Loading slots...</p>
+      <div class="cart-bottom">
+        <div class="cart-total">₹<span id="cartTotal">0</span></div>
+        <button onclick="proceedToSummary()">PROCEED</button>
       </div>
     </div>
 
-    <!-- RIGHT SIDE: Booking Summary -->
-    <div class="booking-right">
+    <!-- Fullscreen Summary Panel -->
+    <div id="summaryPanel" class="summary-panel hidden">
       <h3>Booking Summary</h3>
-      <div id="summaryList">No slots selected</div>
-      <p><strong>Total: ₹<span id="totalAmount">0</span></strong></p>
+      <ul id="summaryList"></ul>
 
-      <input type="text" id="userName" placeholder="Full Name" />
-      <input type="text" id="userPhone" placeholder="Mobile Number" />
-      <button onclick="confirmBooking()">Proceed</button>
+      <div class="summary-form">
+        <input type="text" id="userName" placeholder="Full Name" required />
+        <input type="text" id="userPhone" placeholder="Mobile Number" required />
+        <label><input type="checkbox" id="includeGST" /> Include GST Number</label>
+      </div>
+
+      <div class="summary-total">
+        Payable Now: ₹<span id="summaryTotal">0</span>
+      </div>
+      <button onclick="confirmBooking()">PROCEED</button>
     </div>
   </div>
 
