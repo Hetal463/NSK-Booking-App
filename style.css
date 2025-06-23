@@ -1,26 +1,30 @@
 /* style.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap');
 
 body {
   font-family: 'Inter', sans-serif;
-  background: #FFFFFF;
-  color: #000000;
-  padding: 30px;
   margin: 0;
+  padding: 30px;
+  background-color: #ffffff;
+  color: #000000;
 }
 
+/* Headings */
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
+  margin-bottom: 10px;
   border-bottom: 2px solid #708A62;
   padding-bottom: 5px;
 }
 
+/* Layout */
 .booking-container {
   display: flex;
   flex-wrap: wrap;
   gap: 30px;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
 }
 
 .booking-left {
@@ -35,90 +39,91 @@ h1, h2, h3 {
   padding: 20px;
   border-radius: 12px;
   background: #f9f9f9;
-}
-
-.booking-section {
-  margin-bottom: 30px;
-  padding: 20px;
-  border: 1px solid #708A62;
-  border-left: 4px solid #556B2F;
-  border-radius: 10px;
-  background: #FAFAFA;
-}
-
-label {
-  display: block;
-  margin: 10px 0 5px;
-  font-weight: bold;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px;
-  font-family: 'Inter', sans-serif;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
   font-size: 14px;
 }
 
-button {
-  background: #000000;
-  color: #FFFFFF;
-  border: none;
-  padding: 12px 20px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
-  border-radius: 6px;
-  cursor: pointer;
+/* Forms */
+input, select {
   width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  font-family: 'Poppins', sans-serif;
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background: #708A62;
+  background-color: #708A62;
 }
 
-#slotGrid {
-  overflow-x: auto;
-  margin-top: 20px;
-}
-
+/* Table Slot Grid */
 .slot-table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
 .slot-table th,
 .slot-table td {
-  padding: 10px;
+  border: 1px solid #ddd;
+  padding: 12px;
   text-align: center;
-  border: 1px solid #ccc;
   font-size: 14px;
 }
 
+.slot-table th {
+  background-color: #f3f3f3;
+  font-weight: 600;
+  color: #000;
+}
+
 .slot-table td.booked {
-  background: #f8d7da;
+  background-color: #fddcdc;
   color: #a94442;
-  cursor: not-allowed;
   font-weight: bold;
+  cursor: not-allowed;
 }
 
 .slot-table td.available {
-  background: #e0f7e0;
+  background-color: #e0f5e0;
   cursor: pointer;
 }
 
 .slot-table td.selected {
-  background: #c0e7c0;
+  background-color: #c8eacc;
   border: 2px solid #708A62;
   font-weight: bold;
 }
 
+/* Summary Cart */
 #summaryList {
-  margin-bottom: 15px;
+  margin: 15px 0;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .booking-container {
     flex-direction: column;
