@@ -2,11 +2,11 @@
 const firebaseConfig = {
   apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
   authDomain: "nsk-app-cbb07.firebaseapp.com",
+  databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com",
   projectId: "nsk-app-cbb07",
   storageBucket: "nsk-app-cbb07.appspot.com",
   messagingSenderId: "1012343800963",
-  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
-  measurementId: "G-EQQMSMX3MQ"
+  appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -14,28 +14,23 @@ const db = firebase.database();
 
 // === Constants ===
 const PRICE = 800;
-const timeSlots = [];
-for (let h = 7; h <= 22; h++) timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
-const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const courts = ['Court 1', 'Court 2', 'Court 3', 'Court 4'];
+const timeSlots = Array.from({ length: 16 }, (_, i) => `${(i + 7).toString().padStart(2, '0')}:00`);
+const courtList = ['Court 1', 'Court 2', 'Court 3', 'Court 4'];
 
 let selectedSlots = [];
 
-// === Helpers ===
 function getWeekDates() {
   const today = new Date();
   const start = new Date(today.setDate(today.getDate() - today.getDay()));
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
+  return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    dates.push(new Date(d));
-  }
-  return dates;
+    return d;
+  });
 }
 
-function formatDateKey(date) {
-  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
+function formatDate(dateObj) {
+  return `${dateObj.getFullYear()}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getDate().toString().padStart(2,'0')}`;
 }
 
 function updateCartUI() {
@@ -49,7 +44,7 @@ function updateCartUI() {
   cartBar.classList.remove('hidden');
   selectedSlots.forEach(s => {
     const div = document.createElement('div');
-    div.innerText = `${s.time} | ${s.date} | ${s.court}`;
+    div.innerText = `${s.date} | ${s.time} | ${s.court}`;
     cart.appendChild(div);
   });
   document.getElementById('cartTotal').innerText = selectedSlots.length * PRICE;
@@ -60,7 +55,7 @@ function proceedToSummary() {
   list.innerHTML = '';
   selectedSlots.forEach(s => {
     const li = document.createElement('li');
-    li.innerText = `${s.court} — ${s.date} at ${s.time}`;
+    li.innerText = `${s.date} – ${s.time} – ${s.court}`;
     list.appendChild(li);
   });
   document.getElementById('summaryTotal').innerText = selectedSlots.length * PRICE;
@@ -70,101 +65,116 @@ function proceedToSummary() {
 function confirmBooking() {
   const name = document.getElementById('userName').value.trim();
   const phone = document.getElementById('userPhone').value.trim();
-  if (!name || !phone) return alert("Please enter all details");
+  if (!name || !phone) return alert("Please fill name and mobile");
 
   const gst = document.getElementById('includeGST').checked;
   const total = selectedSlots.length * PRICE;
 
-  // === Save Booking to Firebase ===
   selectedSlots.forEach(s => {
     const ref = db.ref(`bookings/${s.date}/${s.time}/${s.court.replace(' ', '_')}`);
     ref.set({ name, phone, paid: total, gst });
   });
 
-  // === Razorpay ===
+  const msg = `✅ *Booking Confirmed!*\n👤 ${name}\n📱 ${phone}\n🗓️ Slots:\n` +
+    selectedSlots.map(s => `• ${s.date} – ${s.time} – ${s.court}`).join('\n') +
+    `\n💰 Total: ₹${total}`;
+
   const options = {
-    key: "rzp_test_dummyKEY123456789", // REPLACE with live key
+    key: "rzp_test_YourKeyHere", // 🔁 Replace with your live key
     amount: total * 100,
     currency: "INR",
-    name: "NSK Pickleball",
-    description: "Slot Booking",
-    handler: function () {
-      // === WhatsApp Message ===
-      const msg = `Booking Confirmed!\nName: ${name}\nPhone: ${phone}\nSlots:\n` +
-        selectedSlots.map(s => `${s.date} – ${s.time} – ${s.court}`).join('\n') +
-        `\nAmount Paid: ₹${total}`;
+    name: "Nashik Sports Klub",
+    description: "Court Booking",
+    prefill: { name, contact: phone },
+    handler: () => {
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
       alert("Booking confirmed!");
       window.location.href = "home.html";
-    },
-    prefill: {
-      name: name,
-      contact: phone
     }
   };
-  const rzp = new Razorpay(options);
-  rzp.open();
+  new Razorpay(options).open();
 }
 
-// === Build Grid ===
 function buildGrid() {
-  const grid = document.getElementById('slotGrid');
+  const grid = document.getElementById("slotGrid");
   grid.innerHTML = '';
 
-  const dates = getWeekDates();
-  document.getElementById('week-date-range').innerText =
-    `${dates[0].toDateString()} - ${dates[6].toDateString()}`;
+  const weekDates = getWeekDates();
+  const dateLabels = weekDates.map(d => d.toDateString());
 
-  // Headers
+  document.getElementById("week-date-range").innerText =
+    `${dateLabels[0]} – ${dateLabels[6]}`;
+
+  // Build header row
   grid.appendChild(document.createElement('div')); // empty corner
-  for (let d = 0; d < 7; d++) {
-    const head = document.createElement('div');
-    head.className = 'slot-header';
-    head.innerText = days[dates[d].getDay()] + `\n${dates[d].getDate()}`;
-    grid.appendChild(head);
-  }
+  weekDates.forEach(d => {
+    const header = document.createElement('div');
+    header.className = 'slot-header';
+    header.innerText = d.toDateString().split(' ').slice(0, 2).join(' ');
+    grid.appendChild(header);
+  });
 
-  timeSlots.forEach(time => {
-    // Time column
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'slot-time';
-    timeDiv.innerText = time;
-    grid.appendChild(timeDiv);
-
-    for (let d = 0; d < 7; d++) {
-      const cell = document.createElement('div');
-      cell.className = 'slot-cell available';
-      const dateKey = formatDateKey(dates[d]);
-      cell.innerText = `₹${PRICE}\n1 left`;
-      cell.onclick = () => {
-        const key = `${dateKey}-${time}-Court 1`; // Only 1 court shown now
-        const already = selectedSlots.find(s => s.key === key);
-        if (already) {
-          selectedSlots = selectedSlots.filter(s => s.key !== key);
-          cell.classList.remove('selected');
-        } else {
-          selectedSlots.push({ key, date: dateKey, time, court: 'Court 1' });
-          cell.classList.add('selected');
-        }
-        updateCartUI();
-      };
-
-      // Fetch booked slots
-      const ref = db.ref(`bookings/${dateKey}/${time}/Court_1`);
-      ref.once('value', snap => {
-        if (snap.exists()) {
-          cell.className = 'slot-cell booked';
-          cell.innerText = 'Booked';
-          cell.onclick = null;
-        }
+  // Fetch all bookings first
+  const fetches = [];
+  weekDates.forEach(date => {
+    const dateKey = formatDate(date);
+    timeSlots.forEach(time => {
+      courtList.forEach(court => {
+        fetches.push(
+          db.ref(`bookings/${dateKey}/${time}/${court.replace(' ', '_')}`).once('value')
+            .then(snap => ({ key: `${dateKey}-${time}-${court}`, booked: snap.exists() }))
+        );
       });
+    });
+  });
 
-      grid.appendChild(cell);
-    }
+  Promise.all(fetches).then(results => {
+    const bookedMap = {};
+    results.forEach(res => bookedMap[res.key] = res.booked);
+
+    timeSlots.forEach(time => {
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'slot-time';
+      timeDiv.innerText = time;
+      grid.appendChild(timeDiv);
+
+      weekDates.forEach(date => {
+        const dateKey = formatDate(date);
+        const cell = document.createElement('div');
+        const court = getCourtForDay(date.getDay());
+        const key = `${dateKey}-${time}-${court}`;
+        const isBooked = bookedMap[key];
+
+        cell.className = isBooked ? 'slot-cell booked' : 'slot-cell available';
+        cell.innerText = isBooked ? 'Booked' : `₹${PRICE}\n1 left`;
+
+        if (!isBooked) {
+          cell.onclick = () => {
+            const already = selectedSlots.find(s =>
+              s.date === dateKey && s.time === time && s.court === court
+            );
+            if (already) {
+              selectedSlots = selectedSlots.filter(s =>
+                !(s.date === dateKey && s.time === time && s.court === court)
+              );
+              cell.classList.remove('selected');
+            } else {
+              selectedSlots.push({ date: dateKey, time, court });
+              cell.classList.add('selected');
+            }
+            updateCartUI();
+          };
+        }
+
+        grid.appendChild(cell);
+      });
+    });
   });
 }
 
-// === Init ===
-window.onload = () => {
-  buildGrid();
-};
+function getCourtForDay(dayIndex) {
+  // Optional: rotate between courts, or keep as Court 1–4 shown
+  return courtList[dayIndex % 4];
+}
+
+window.onload = buildGrid;
