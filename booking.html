@@ -3,27 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Book Slot – NSK</title>
+  <title>Pickleball Courts | Nashik Sports Klub</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter&family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: white;
+      color: #000;
+    }
+    h2 {
+      font-family: 'Playfair Display', serif;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .grid-container {
+      display: flex;
+      padding: 1rem;
+    }
+    .grid-table {
+      flex: 3;
+      overflow-x: auto;
+    }
+    .summary {
+      flex: 1;
+      margin-left: 20px;
+      border: 1px solid #708A62;
+      padding: 1rem;
+      border-radius: 12px;
+    }
+    .slot {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .slot.selected {
+      background: #708A62;
+      color: white;
+    }
+    .slot.booked {
+      background: #ccc;
+      color: #999;
+      pointer-events: none;
+    }
+    button {
+      background: #556B2F;
+      color: white;
+      padding: 10px 16px;
+      font-family: 'Poppins', sans-serif;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #708A62;
+    }
+  </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Pickleball Courts | Nashik Sports Klub</h2>
-  <hr />
+  <h2>Pickleball Courts | Nashik Sports Klub</h2>
+  <div id="loader" style="text-align:center;">Loading slot grid...</div>
 
-  <div id="slotGridStatus">Loading slot grid...</div>
-  <div id="slotGridContainer"></div>
-
-  <div style="margin: 20px; border: 1px solid #ccc; padding: 20px;">
-    <h3>Booking Summary</h3>
-    <p id="bookingTotal">Total: ₹0</p>
-    <input type="text" id="fullName" placeholder="Your Full Name" readonly />
-    <input type="text" id="mobileNumber" placeholder="Mobile Number" readonly />
-    <button id="payButton" style="background-color:#708A62; color:white; padding:10px;">Proceed to Pay</button>
+  <div class="grid-container" id="mainContent" style="display:none;">
+    <div class="grid-table" id="slotGrid"></div>
+    <div class="summary">
+      <h3>Booking Summary</h3>
+      <div id="summaryDetails"></div>
+      <div>Total: ₹<span id="totalAmount">0</span></div>
+      <input type="text" id="userName" placeholder="Your Full Name" readonly>
+      <input type="text" id="userPhone" placeholder="Mobile Number" readonly>
+      <button onclick="proceedToPay()">Proceed to Pay</button>
+    </div>
   </div>
 
   <script src="booking.js"></script>
