@@ -1,3 +1,4 @@
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
   authDomain: "nsk-app-cbb07.firebaseapp.com",
@@ -5,143 +6,154 @@ const firebaseConfig = {
   storageBucket: "nsk-app-cbb07.appspot.com",
   messagingSenderId: "1012343800963",
   appId: "1:1012343800963:web:4b695a8a871fe42fc2c7b6",
-  databaseURL: "https://nsk-app-cbb07-default-rtdb.firebaseio.com"
+  measurementId: "G-EQQMSMX3MQ"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const startHour = 7;
-const endHour = 23;
-const courtCount = 4;
-const price = 800;
+let userName = "";
+let userPhone = "";
+let userUID = "";
 
-const table = document.getElementById("slotTable");
-const summaryList = document.getElementById("summaryList");
-const totalPrice = document.getElementById("totalPrice");
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    alert("You are not logged in");
+    window.location.href = "login.html";
+    return;
+  }
+  userUID = user.uid;
+  userPhone = user.phoneNumber;
 
-const selectedSlots = [];
+  const userDoc = db.collection("users").doc(userUID);
+  const snap = await userDoc.get();
 
-const today = new Date();
-const weekdays = Array.from({ length: 5 }, (_, i) => {
-  const d = new Date(today);
-  d.setDate(d.getDate() + i);
-  return d;
+  if (!snap.exists()) {
+    const namePrompt = prompt("Welcome! Please enter your full name:");
+    if (namePrompt) {
+      await userDoc.set({
+        name: namePrompt,
+        phone: userPhone,
+        createdAt: new Date()
+      });
+      userName = namePrompt;
+    } else {
+      alert("Name required.");
+      return;
+    }
+  } else {
+    const data = snap.data();
+    userName = data.name || "";
+  }
+
+  document.getElementById("fullName").value = userName;
+  document.getElementById("mobileNumber").value = userPhone;
+
+  loadSlotGrid();
 });
 
-function formatTime(hour) {
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const h = hour % 12 || 12;
-  return `${h}:00 ${suffix}`;
-}
+let selectedSlots = [];
 
-function formatDate(d) {
-  return d.toISOString().split("T")[0];
-}
-
-function renderTable() {
-  let html = "<tr><th>Time</th>";
-  weekdays.forEach(d => {
-    html += `<th>${d.toDateString().slice(0, 10)}</th>`;
-  });
-  html += "</tr>";
-
-  for (let hour = startHour; hour < endHour; hour++) {
-    html += `<tr><td>${formatTime(hour)}</td>`;
-    weekdays.forEach(date => {
-      const slotId = `${formatDate(date)}_${hour}`;
-      html += `<td id="${slotId}" class="available">₹${price}<br><small>1 left</small></td>`;
-    });
-    html += "</tr>";
-  }
-
-  table.innerHTML = html;
-  document.getElementById("gridStatus").innerText = "";
-
-  document.querySelectorAll(".available").forEach(cell => {
-    cell.addEventListener("click", () => toggleSlot(cell.id));
+function loadSlotGrid() {
+  const container = document.getElementById("slotGridContainer");
+  container.innerHTML = "";
+  const grid = document.createElement("table");
+  grid.style.width = "100%";
+  grid.style.borderCollapse = "collapse";
+  const startHour = 7;
+  const endHour = 23;
+  const today = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    return d;
   });
 
-  fetchBookings();
-}
-
-function toggleSlot(id) {
-  const cell = document.getElementById(id);
-  if (cell.classList.contains("booked")) return;
-
-  if (selectedSlots.includes(id)) {
-    selectedSlots.splice(selectedSlots.indexOf(id), 1);
-    cell.classList.remove("selected");
-  } else {
-    selectedSlots.push(id);
-    cell.classList.add("selected");
-  }
-
-  updateSummary();
-}
-
-function updateSummary() {
-  summaryList.innerHTML = "";
-  selectedSlots.forEach(slot => {
-    const [date, hour] = slot.split("_");
-    const time = formatTime(parseInt(hour));
-    summaryList.innerHTML += `<li>${date}, ${time} - ₹${price}</li>`;
+  // Header row
+  const header = grid.insertRow();
+  header.insertCell().innerText = "Time";
+  days.forEach(d => {
+    const cell = header.insertCell();
+    cell.innerText = d.toDateString().slice(0, 10);
+    cell.style.fontWeight = "bold";
   });
-  totalPrice.innerText = selectedSlots.length * price;
-}
 
-function fetchBookings() {
-  weekdays.forEach(date => {
-    for (let hour = startHour; hour < endHour; hour++) {
-      const path = `bookings/${formatDate(date)}/${hour}`;
-      db.ref(path).once("value", snapshot => {
-        const bookedCount = snapshot.numChildren();
-        for (let court = 1; court <= bookedCount; court++) {
-          const cell = document.getElementById(`${formatDate(date)}_${hour}`);
-          if (cell) {
-            cell.classList.remove("available");
-            cell.classList.add("booked");
-            cell.innerHTML = `₹${price}<br><small>0 left</small>`;
-          }
+  for (let h = startHour; h <= endHour; h++) {
+    const row = grid.insertRow();
+    const time = `${h.toString().padStart(2, "0")}:00`;
+    row.insertCell().innerText = time;
+    for (let d = 0; d < 7; d++) {
+      const cell = row.insertCell();
+      const slotId = `${days[d].toISOString().split("T")[0]}_${time}`;
+      cell.innerText = "₹800";
+      cell.style.cursor = "pointer";
+      cell.style.textAlign = "center";
+      cell.style.padding = "5px";
+      cell.style.border = "1px solid #ccc";
+      cell.id = slotId;
+
+      db.collection("bookings").doc(slotId).get().then(doc => {
+        if (doc.exists) {
+          cell.innerText = "Booked";
+          cell.style.backgroundColor = "#f8d7da";
+          cell.style.color = "#721c24";
+          cell.style.cursor = "not-allowed";
+        } else {
+          cell.onclick = () => toggleSlot(slotId, cell);
         }
       });
     }
-  });
-}
-
-function proceedBooking() {
-  const name = document.getElementById("fullName").value.trim();
-  const mobile = document.getElementById("mobileNumber").value.trim();
-  if (!name || !mobile || selectedSlots.length === 0) {
-    alert("Please enter details and select slots.");
-    return;
   }
 
-  const amount = selectedSlots.length * price * 100;
+  container.appendChild(grid);
+  document.getElementById("slotGridStatus").style.display = "none";
+}
+
+function toggleSlot(slotId, cell) {
+  const index = selectedSlots.indexOf(slotId);
+  if (index > -1) {
+    selectedSlots.splice(index, 1);
+    cell.style.backgroundColor = "";
+  } else {
+    selectedSlots.push(slotId);
+    cell.style.backgroundColor = "#c3e6cb";
+  }
+
+  const total = selectedSlots.length * 800;
+  document.getElementById("bookingTotal").innerText = `Total: ₹${total}`;
+}
+
+document.getElementById("payButton").addEventListener("click", async () => {
+  if (selectedSlots.length === 0) return alert("No slots selected.");
+
+  const amount = selectedSlots.length * 800 * 100;
+
   const options = {
-    key: "rzp_test_YourKeyHere",
-    amount,
+    key: "rzp_test_YourKeyHere", // replace with your Razorpay key
+    amount: amount,
     currency: "INR",
-    name: "Nasik Sports Klub",
-    description: "Slot Booking",
-    handler: function () {
-      selectedSlots.forEach(slot => {
-        const [date, hour] = slot.split("_");
-        db.ref(`bookings/${date}/${hour}`).push({ name, mobile });
-      });
-      alert("Booking successful!");
+    name: "Nashik Sports Klub",
+    description: "Court Booking",
+    handler: async function (response) {
+      for (const slot of selectedSlots) {
+        await db.collection("bookings").doc(slot).set({
+          name: userName,
+          phone: userPhone,
+          slot: slot,
+          timestamp: new Date()
+        });
+      }
 
-      // WhatsApp message
-      const message = `Hello ${name}, your slots are booked at Nasik Sports Klub:\n${selectedSlots.map(s => {
-        const [d, h] = s.split("_");
-        return `- ${d}, ${formatTime(h)}`;
-      }).join("\n")}`;
-      window.open(`https://wa.me/${mobile}?text=${encodeURIComponent(message)}`, "_blank");
-
-      window.location.reload();
+      // WhatsApp confirmation
+      const msg = `Hello ${userName}, your booking is confirmed for the following slots:\n\n${selectedSlots.join("\n")}\n\n- Nashik Sports Klub`;
+      const whatsappLink = `https://wa.me/${userPhone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
+      window.open(whatsappLink, "_blank");
+      alert("Booking confirmed! Redirecting to WhatsApp.");
+      window.location.href = "index.html";
     },
     prefill: {
-      name,
-      contact: mobile
+      name: userName,
+      contact: userPhone
     },
     theme: {
       color: "#708A62"
@@ -150,4 +162,4 @@ function proceedBooking() {
 
   const rzp = new Razorpay(options);
   rzp.open();
-}
+});
