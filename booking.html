@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pickleball Courts | Nashik Sports Klub</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter&family=Poppins&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -12,96 +13,73 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #fff;
+      background: white;
       color: #000;
     }
-
     h2 {
       font-family: 'Playfair Display', serif;
       text-align: center;
-      margin-top: 1rem;
+      margin-top: 20px;
     }
-
-    .grid {
+    .grid-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 1rem;
+      padding: 1rem;
     }
-
-    .slot-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      max-width: 95vw;
+    .grid-table {
+      flex: 3;
       overflow-x: auto;
     }
-
+    .summary {
+      flex: 1;
+      margin-left: 20px;
+      border: 1px solid #708A62;
+      padding: 1rem;
+      border-radius: 12px;
+    }
     .slot {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
+      padding: 10px;
       text-align: center;
-      font-size: 14px;
+      border: 1px solid #ccc;
       cursor: pointer;
     }
-
-    .slot.booked {
-      background: #fbb;
-      cursor: not-allowed;
-    }
-
     .slot.selected {
       background: #708A62;
-      color: #fff;
-    }
-
-    .summary {
-      margin-top: 1rem;
-      border-top: 1px solid #ccc;
-      padding: 1rem;
-      width: 95%;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .summary input {
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      width: 100%;
-      margin-bottom: 0.5rem;
-      font-size: 16px;
-    }
-
-    .pay-btn {
-      padding: 0.75rem;
-      background: #708A62;
       color: white;
-      font-size: 16px;
-      border: none;
-      cursor: pointer;
-      width: 100%;
     }
-
-    .pay-btn:hover {
+    .slot.booked {
+      background: #ccc;
+      color: #999;
+      pointer-events: none;
+    }
+    button {
       background: #556B2F;
+      color: white;
+      padding: 10px 16px;
+      font-family: 'Poppins', sans-serif;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #708A62;
     }
   </style>
 </head>
 <body>
   <h2>Pickleball Courts | Nashik Sports Klub</h2>
-  <div id="loading" style="text-align: center;">Loading slot grid...</div>
+  
 
-  <div class="grid" id="slotGrid" style="display:none;"></div>
-
-  <div class="summary">
-    <h3>Booking Summary</h3>
-    <p>Total: ₹<span id="total">0</span></p>
-    <input type="text" id="userName" placeholder="Your Full Name" readonly />
-    <input type="text" id="userPhone" placeholder="Mobile Number" readonly />
-    <button class="pay-btn" onclick="proceedToPay()">Proceed to Pay</button>
+  <div class="grid-container" id="mainContent" style="display:none;">
+    <div class="grid-table" id="slotGrid"></div>
+    <div class="summary">
+      <h3>Booking Summary</h3>
+      <div id="summaryDetails"></div>
+      <div>Total: ₹<span id="totalAmount">0</span></div>
+      <input type="text" id="userName" placeholder="Your Full Name" readonly>
+      <input type="text" id="userPhone" placeholder="Mobile Number" readonly>
+      <button onclick="proceedToPay()">Proceed to Pay</button>
+    </div>
   </div>
 
   <script src="booking.js"></script>
