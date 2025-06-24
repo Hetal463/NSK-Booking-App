@@ -1,4 +1,4 @@
-// Firebase config
+// Firebase Setup
 const firebaseConfig = {
   apiKey: "AIzaSyCYCvgKtc_EWI2QHuaLTkxNp0S7bq3BPgo",
   authDomain: "nsk-app-cbb07.firebaseapp.com",
@@ -12,7 +12,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const courts = ['Court 1', 'Court 2', 'Court 3', 'Court 4'];
 const startHour = 7;
 const endHour = 23;
 const price = 800;
@@ -36,9 +35,10 @@ function getDatesForWeek() {
 function renderGrid() {
   const grid = document.getElementById("slotGrid");
   const dates = getDatesForWeek();
-  let html = `<table><thead><tr><th>Time</th>`;
+  let html = `<table border="1" style="border-collapse: collapse; width: 100%; text-align: center;"><thead><tr><th>Time</th>`;
   dates.forEach(d => {
-    html += `<th>${d}</th>`;
+    const [y, m, day] = d.split("-");
+    html += `<th>${day}/${m}</th>`;
   });
   html += `</tr></thead><tbody>`;
 
@@ -46,12 +46,15 @@ function renderGrid() {
     html += `<tr><td>${formatTime(hour)}</td>`;
     dates.forEach(date => {
       const slotId = `${date}-${hour}`;
-      html += `<td class="slot" id="${slotId}" onclick="toggleSlot('${slotId}')">₹${price}</td>`;
+      html += `<td id="${slotId}" class="slot" onclick="toggleSlot('${slotId}')">₹${price}</td>`;
     });
     html += `</tr>`;
   }
+
   html += `</tbody></table>`;
   grid.innerHTML = html;
+  document.getElementById("loader").style.display = 'none';
+  document.getElementById("mainContent").style.display = 'flex';
 }
 
 function toggleSlot(id) {
@@ -81,7 +84,7 @@ function proceedToPay() {
   const total = selectedSlots.length * price;
 
   if (!name || !phone || total === 0) {
-    alert("Fill all fields and select at least one slot.");
+    alert("Please login and select at least one slot.");
     return;
   }
 
@@ -92,42 +95,43 @@ function proceedToPay() {
     name: "Nashik Sports Klub",
     description: "Slot Booking",
     handler: function (response) {
-      const bookingData = {
+      db.collection("bookings").add({
         name,
         phone,
         slots: selectedSlots,
         total,
-        timestamp: new Date(),
-        paymentId: response.razorpay_payment_id
-      };
-      db.collection("bookings").add(bookingData);
-      window.open(`https://wa.me/91${phone}?text=Thank you ${name}, your booking is confirmed for ${selectedSlots.join(", ")}`, '_blank');
+        paymentId: response.razorpay_payment_id,
+        timestamp: new Date()
+      }).then(() => {
+        window.open(`https://wa.me/91${phone}?text=Hi ${name}, your slots (${selectedSlots.join(", ")}) are booked at NSK.`, "_blank");
+        alert("Booking successful!");
+      });
     },
-    prefill: {
-      name,
-      contact: phone
-    }
+    prefill: { name, contact: phone }
   };
   new Razorpay(options).open();
 }
 
+// 🔐 Wait for login and then render everything
 auth.onAuthStateChanged(user => {
   if (user) {
     const phone = user.phoneNumber;
-    db.collection("users").doc(phone).get().then(doc => {
+    const userDoc = db.collection("users").doc(phone);
+
+    userDoc.get().then(doc => {
       if (doc.exists) {
         const data = doc.data();
-        document.getElementById("userName").value = data.name;
+        document.getElementById("userName").value = data.name || "";
         document.getElementById("userPhone").value = phone;
       } else {
-        const name = prompt("Enter your name to complete registration:");
-        db.collection("users").doc(phone).set({ name });
+        const name = prompt("Enter your full name:");
+        userDoc.set({ name });
         document.getElementById("userName").value = name;
         document.getElementById("userPhone").value = phone;
       }
-      document.getElementById("loader").style.display = 'none';
-      document.getElementById("mainContent").style.display = 'flex';
       renderGrid();
+    }).catch(err => {
+      console.error("Firestore error:", err);
     });
   } else {
     window.location.href = "login.html";
