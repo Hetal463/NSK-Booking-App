@@ -3,56 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <title>Book Slot – NSK</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="style.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter&family=Poppins&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter&family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #fff;
+      color: #000;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      font-family: 'Playfair Display', serif;
+      text-align: center;
+      margin-top: 0;
+    }
+    .slot-grid {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    th {
+      background-color: #708A62;
+      color: white;
+    }
+    td.available {
+      background-color: #e9f5ee;
+      cursor: pointer;
+    }
+    td.booked {
+      background-color: #f8d7da;
+      color: #a00;
+    }
+    td.selected {
+      background-color: #556B2F;
+      color: #fff;
+    }
+    .summary {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 15px;
+      font-family: 'Inter';
+    }
+    .btn {
+      background-color: #708A62;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-family: 'Poppins';
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #556B2F;
+    }
+  </style>
+</head>
+<body>
+  <h2>Pickleball Courts | Nashik Sports Klub</h2>
+  <div id="gridStatus">Loading slot grid...</div>
+  <div class="slot-grid">
+    <table id="slotTable"></table>
+  </div>
+
+  <div class="summary">
+    <h3>Booking Summary</h3>
+    <ul id="summaryList"></ul>
+    <p><strong>Total:</strong> ₹<span id="totalPrice">0</span></p>
+    <input type="text" id="fullName" placeholder="Your Full Name" required><br><br>
+    <input type="text" id="mobileNumber" placeholder="Mobile Number" required><br><br>
+    <button class="btn" onclick="proceedBooking()">Proceed to Pay</button>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-</head>
-<body>
-  <div class="booking-page">
-    <!-- Header -->
-    <div class="booking-header">
-      <h2>Pickleball Courts | Nashik Sports Klub</h2>
-      <p id="week-date-range">Loading...</p>
-    </div>
-
-    <!-- Time x Day Grid -->
-    <div id="slotGrid" class="slot-grid">
-      <!-- JS will populate table: time rows x Mon-Sun columns -->
-      Loading slot grid...
-    </div>
-
-    <!-- Floating Cart -->
-    <div id="cartBar" class="cart-bar hidden">
-      <div id="cartSummary" class="cart-summary">
-        <!-- Selected slots will appear here -->
-      </div>
-      <div class="cart-bottom">
-        <div class="cart-total">₹<span id="cartTotal">0</span></div>
-        <button onclick="proceedToSummary()">PROCEED</button>
-      </div>
-    </div>
-
-    <!-- Fullscreen Summary Panel -->
-    <div id="summaryPanel" class="summary-panel hidden">
-      <h3>Booking Summary</h3>
-      <ul id="summaryList"></ul>
-
-      <div class="summary-form">
-        <input type="text" id="userName" placeholder="Full Name" required />
-        <input type="text" id="userPhone" placeholder="Mobile Number" required />
-        <label><input type="checkbox" id="includeGST" /> Include GST Number</label>
-      </div>
-
-      <div class="summary-total">
-        Payable Now: ₹<span id="summaryTotal">0</span>
-      </div>
-      <button onclick="confirmBooking()">PROCEED</button>
-    </div>
-  </div>
-
   <script src="booking.js"></script>
 </body>
 </html>
