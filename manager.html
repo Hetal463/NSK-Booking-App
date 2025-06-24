@@ -4,31 +4,26 @@
   <meta charset="UTF-8" />
   <title>Manager – NSK</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
 </head>
 <body>
-  <h2>Manager Dashboard</h2>
+  <h2>NSK Manager Dashboard</h2>
 
-  <!-- Login Section -->
   <div id="loginSection">
-    <p><strong>Enter Manager Password:</strong></p>
-    <input type="password" id="adminPass" placeholder="Enter password" />
+    <input type="password" id="adminPass" placeholder="Enter manager password" />
     <button onclick="verifyPassword()">Login</button>
   </div>
 
-  <!-- Dashboard Section -->
   <div id="dashboard" style="display: none;">
-    <label for="viewDate"><strong>Select Date:</strong></label>
+    <label for="viewDate">Select Date:</label>
     <input type="date" id="viewDate" />
-    
+    <button onclick="loadBookings()">View</button>
+    <button onclick="exportCSV()">Export CSV</button>
     <div id="results" style="margin-top: 20px;"></div>
-    <button onclick="exportCSV()">Export to Excel</button>
   </div>
 
-  <!-- Logic -->
   <script src="manager.js"></script>
 </body>
 </html>
